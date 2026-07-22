@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #15590d;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+    
+        .frame{
+            border: 10px solid #fff;
+            padding: 12px 24px;
+
+        }
+
+        h1{
+            color: #ffffff;
+        }
+
+        h2{
+            color: #15590d;
+        }
+
+        .container{
+            background-color: #fff;
+            text-align: center;
+            min-width: 40%;
+            height: auto;
+            padding: 12px 12px;
+            border-radius: 0%;
+        }
+
+        .ots{
+            padding: 8px 12px;
+        }
+
+        button{
+            border-radius: 1%;
+            background-color:#15590d;
+            color: #fff;
+            font-size: 24px;
+            stroke-color: #fff;
+        }
+
+        input{
+            color: #15590d;
+        }
+    </style>
+    <div class="frame">
+        <h1>Здравствуйте!</h1>
+        <div class="container">
+            <h2>Логин</h2>
+            <p></p>
+            <input id="login" type="text" required placeholder="Логин...">
+            <div class="ots"></div>
+            <h2>Пароль</h2>
+            <p></p>
+            <input id="password" type="password" required placeholder="Пароль...">
+            <p></p>
+            <div class="ots"></div>
+            <button onclick="send()">Авторизация</button>
+        </div>
+    </div>
+<script>
+
+
+    async function send() {
+            // 1. СНАЧАЛА получаем значения из полей
+        const name = document.getElementById('login').value;
+        const password = document.getElementById('password').value;
+
+        // 2. Проверяем, что поля не пустые
+        if (!name || !password) {
+            alert('Заполните все поля!');
+            return;
+        }
+
+    // 3. ПОТОМ отправляем запрос
+        try {
+            const response = await fetch('/reglog', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({'name':name, 'password':password})
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                window.location.href = data.redirect_url;
+            } else {
+                const error = await response.json();
+                alert(error.detail || 'Ошибка авторизации');
+            }
+        } catch (e) {
+            ;
+        }
+    }
+</script>
+</script>
+</html>

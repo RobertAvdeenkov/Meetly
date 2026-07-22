@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #15590d;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 30px 15px;
+        }
+        .frame {
+            border: 10px solid #fff;
+            padding: 12px 24px;
+            width: 100%;
+            max-width: 800px;
+        }
+        h1 {
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #15590d;
+            text-align: left;
+            margin: 0 0 15px 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px 25px;
+            width: 100%;
+        }
+        button {
+            border-radius: 1%;
+            background-color: #15590d;
+            color: #fff;
+            font-size: 18px;
+            border: none;
+            padding: 8px 20px;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+        button:hover {
+            background-color: #1f7a14;
+        }
+        input, textarea, select {
+            color: #15590d;
+            border: 2px solid #15590d;
+            padding: 6px 10px;
+            font-size: 15px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 3px;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 50px;
+        }
+        .form-group {
+            margin-bottom: 10px;
+            text-align: left;
+        }
+        .form-group label {
+            font-weight: bold;
+            color: #15590d;
+            font-size: 14px;
+        }
+        #message {
+            margin-top: 15px;
+            padding: 10px;
+            display: none;
+            font-weight: bold;
+        }
+        #message.success {
+            background: #c6f6d5;
+            color: #22543d;
+            display: block;
+        }
+        #message.error {
+            background: #fed7d7;
+            color: #9b2c2c;
+            display: block;
+        }
+    </style>
+
+    <div class="frame">
+        <h1>Планировщик мероприятий</h1>
+        <div class="container">
+
+        <h2>Создать мероприятие</h2>
+            <div id="message"></div>
+            <div class="form-group">
+                <label>Название</label>
+                <input type="text" id="title" required placeholder="Название">
+            </div>
+            <div class="form-group">
+                <label>Дата окончания</label>
+                <input type="text" id="date" placeholder="В формате год-месяц-день">
+            </div>
+            <div class="form-group">
+                <label>Место</label>
+                <input type="text" id="location" required placeholder="Где пройдет">
+            </div>
+            <div class="form-group">
+                <label>Тип мероприятия</label>
+                <input type="text" id="category" placeholder="Введите тип...">
+            </div>
+            <div class="form-group">
+                <label>Описание</label>
+                <textarea id="description" placeholder="Кратко"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Теги</label>
+                <textarea id="tags" placeholder="Формат:#первый#второй"></textarea>
+            </div>
+            <button onclick="send()">Создать</button>
+            <button onclick="deleteMenu()">Редактирование</button>
+            <button onclick="search()">Поиск</button>
+            <button onclick="accountINFO()">Аккаунты</button>
+            <button onclick="uved()">Уведомления</button>
+            <p></p>
+            <button onclick="static()">Статистика сайта</button>
+            <button onclick="list()">Список</button>
+            <button onclick="topMenu()">Топ моих мероприятий</button>
+            <button onclick="hist()">История</button>
+            <button onclick="global()">Популярные места</button>
+            <button onclick="info()">О сайте</button>
+    </div>
+    <script>
+        async function send() {
+            const title = document.getElementById('title').value;
+            const date = document.getElementById('date').value;
+            const location = document.getElementById('location').value;
+            const category = document.getElementById('category').value;
+            const description = document.getElementById('description').value;
+            const tag = document.getElementById('tags').value;
+
+            const msg = document.getElementById('message');
+            msg.style.display = 'none';
+            msg.className = '';
+
+            if (!title || !date || !location) {
+                msg.textContent = 'Заполните название, дату и место!';
+                msg.className = 'error';
+                msg.style.display = 'block';
+                return;
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+
+            if (!token) {
+                msg.textContent = 'Токен не найден!';
+                msg.className = 'error';
+                msg.style.display = 'block';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('name', title);
+            formData.append('date', date);
+            formData.append('place', location);
+            formData.append('type', category);
+            formData.append('desc', description);
+            formData.append('tags', tag);
+
+            try {
+                const response = await fetch("/add?token=" + token, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    msg.textContent = data.message || 'Мероприятие создано!';
+                    msg.className = 'success';
+                    msg.style.display = 'block';
+                    document.getElementById('title').value = '';
+                    document.getElementById('date').value = '';
+                    document.getElementById('location').value = '';
+                    document.getElementById('category').value = '';
+                    document.getElementById('description').value = '';
+                    document.getElementById('tags').value = '';
+                } else {
+                    msg.textContent = data.detail || 'Ошибка при создании';
+                    msg.className = 'error';
+                    msg.style.display = 'block';
+                }
+            } catch (e) {
+                alert('Успешно!');
+            }
+
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 4000);
+        }
+
+        async function deleteMenu() {
+    // 3. ПОТОМ отправляем запрос
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            try {
+                const response = await fetch('/deletemenuRED', {
+                    method: 'POST',
+                    headers: { "Accept": "application/json", "Content-Type": "application/json", 'Authorization':'Bearer '+token},
+                    body: JSON.stringify({'token':token})
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById("message").textContent = data.message;
+                    window.location.href = data.redirect_url;
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Ошибка авторизации');
+                }
+            } catch (e) {
+                ;
+            }
+        }
+
+        async function static() {
+    // 3. ПОТОМ отправляем запрос
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            try {
+                const response = await fetch('/staticRED', {
+                    method: 'POST',
+                    headers: { "Accept": "application/json", "Content-Type": "application/json", 'Authorization':'Bearer '+token},
+                    body: JSON.stringify({'token':token})
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById("message").textContent = data.message;
+                    window.location.href = data.redirect_url;
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Ошибка авторизации');
+                }
+            } catch (e) {
+                ;
+            }
+        }
+
+        async function info() {
+    // 3. ПОТОМ отправляем запрос
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            try {
+                const response = await fetch('/infoRED', {
+                    method: 'POST',
+                    headers: { "Accept": "application/json", "Content-Type": "application/json", 'Authorization':'Bearer '+token},
+                    body: JSON.stringify({'token':token})
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById("message").textContent = data.message;
+                    window.location.href = data.redirect_url;
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Ошибка авторизации');
+                }
+            } catch (e) {
+                ;
+            }
+        }
+
+        async function list() {
+    // 3. ПОТОМ отправляем запрос
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            try {
+                const response = await fetch('/listRED', {
+                    method: 'POST',
+                    headers: { "Accept": "application/json", "Content-Type": "application/json", 'Authorization':'Bearer '+token},
+                    body: JSON.stringify({'token':token})
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById("message").textContent = data.message;
+                    window.location.href = data.redirect_url;
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Ошибка авторизации');
+                }
+            } catch (e) {
+                ;
+            }
+        }
+
+
+        async function topMenu() {
+    // 3. ПОТОМ отправляем запрос
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            try {
+                const response = await fetch('/topmenuRED', {
+                    method: 'POST',
+                    headers: { "Accept": "application/json", "Content-Type": "application/json", 'Authorization':'Bearer '+token},
+                    body: JSON.stringify({'token':token})
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById("message").textContent = data.message;
+                    window.location.href = data.redirect_url;
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Ошибка авторизации');
+                }
+            } catch (e) {
+                ;
+            }
+        }
+
+        async function hist() {
+    // 3. ПОТОМ отправляем запрос
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            try {
+                const response = await fetch('/historyRED', {
+                    method: 'POST',
+                    headers: { "Accept": "application/json", "Content-Type": "application/json", 'Authorization':'Bearer '+token},
+                    body: JSON.stringify({'token':token})
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById("message").textContent = data.message;
+                    window.location.href = data.redirect_url;
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Ошибка авторизации');
+                }
+            } catch (e) {
+                ;
+            }
+        }
+
+        async function global() {
+    // 3. ПОТОМ отправляем запрос
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            try {
+                const response = await fetch('/globalRED', {
+                    method: 'POST',
+                    headers: { "Accept": "application/json", "Content-Type": "application/json", 'Authorization':'Bearer '+token},
+                    body: JSON.stringify({'token':token})
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById("message").textContent = data.message;
+                    window.location.href = data.redirect_url;
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Ошибка авторизации');
+                }
+            } catch (e) {
+                ;
+            }
+        }
+
+        async function search() {
+    // 3. ПОТОМ отправляем запрос
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            try {
+                const response = await fetch('/searchRED', {
+                    method: 'POST',
+                    headers: { "Accept": "application/json", "Content-Type": "application/json", 'Authorization':'Bearer '+token},
+                    body: JSON.stringify({'token':token})
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById("message").textContent = data.message;
+                    window.location.href = data.redirect_url;
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Ошибка авторизации');
+                }
+            } catch (e) {
+                ;
+            }
+        }
+
+        async function accountINFO() {
+    // 3. ПОТОМ отправляем запрос
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            try {
+                const response = await fetch('/profileRED', {
+                    method: 'POST',
+                    headers: { "Accept": "application/json", "Content-Type": "application/json", 'Authorization':'Bearer '+token},
+                    body: JSON.stringify({'token':token})
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById("message").textContent = data.message;
+                    window.location.href = data.redirect_url;
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Ошибка авторизации');
+                }
+            } catch (e) {
+                ;
+            }
+        }
+
+
+        async function uved() {
+    // 3. ПОТОМ отправляем запрос
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            try {
+                const response = await fetch('/uvedRED', {
+                    method: 'POST',
+                    headers: { "Accept": "application/json", "Content-Type": "application/json", 'Authorization':'Bearer '+token},
+                    body: JSON.stringify({'token':token})
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById("message").textContent = data.message;
+                    window.location.href = data.redirect_url;
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Ошибка авторизации');
+                }
+            } catch (e) {
+                ;
+            }
+        }
+    </script>
+</html>

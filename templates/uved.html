@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                background: #15590d;
+                font-family: Arial, sans-serif;
+                margin: 0;
+            }
+        
+            .frame{
+                border: 10px solid #fff;
+                padding: 12px 24px;
+            }
+
+            h1{
+                color: #ffffff;
+            }
+
+            h2{
+                color: #15590d;
+            }
+
+            .container{
+                background-color: #fff;
+                text-align: center;
+                min-width: 40%;
+                height: auto;
+                padding: 12px 12px;
+                border-radius: 0%;
+            }
+
+            .ots{
+                padding: 8px 12px;
+            }
+
+            button{
+                border-radius: 1%;
+                background-color:#15590d;
+                color: #fff;
+                font-size: 24px;
+                stroke-color: #fff;
+                padding: 10px 20px;
+                border: 2px solid #fff;
+                cursor: pointer;
+                margin-bottom: 20px;
+            }
+
+            button:hover {
+                background-color: #1e7a12;
+            }
+
+            input{
+                color: #15590d;
+            }
+            
+            #message {
+                margin: 10px 0;
+                padding: 15px;
+                background-color: #f0f8ee;
+                border: 2px solid #15590d;
+                border-radius: 5px;
+                font-size: 18px;
+                color: #15590d;
+                font-weight: bold;
+            }
+
+            #content {
+                margin-top: 20px;
+                padding: 10px;
+            }
+
+            #content h1 {
+                color: #15590d;
+                font-size: 28px;
+            }
+
+            #content h2 {
+                color: #15590d;
+                font-size: 24px;
+                background-color: #ffffff;
+                padding: 15px;
+                border-radius: 5px;
+            }
+
+            #content h3 {
+                color: #15590d;
+                font-size: 24px;
+                background-color: #ffffff;
+                border-radius: 5px;
+            }
+
+            #content h4 {
+                color: #15590d;
+                font-size: 24px;
+                background-color: #ffffff;
+                border-radius: 5px;
+            }
+
+            hr{
+                color: #15590d;
+                background-color: #15590d;
+                height: 10px;
+                width: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="frame">
+            <div class="container">
+                <hr>
+                <div id="content">
+                    <!-- Сюда будет вставляться полный блок -->
+                </div>
+            </div>
+        </div>
+
+        <script>
+            async function list() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token');
+                // Проверяем наличие токена
+                if (!token) {
+                    alert('Токен не найден в URL');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/uvedSHOW?token='+token, {
+                        method: 'POST',
+                        headers: { 
+                            "Accept": "application/json", 
+                            "Content-Type": "application/json", 
+                            'Authorization': 'Bearer ' + token
+                        },
+                        body: JSON.stringify({'token': token})
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // В message вставляем data.message
+                        const messageElement = document.getElementById("message");
+                        if (messageElement) {
+                            messageElement.textContent = data.message;
+                        }
+                        
+                        // В content вставляем полный блок
+                        const contentElement = document.getElementById('content');
+                        if (contentElement) {
+                            contentElement.innerHTML = `
+                                ${data.message}
+                            `;
+                        }
+                    } else {
+                        const error = await response.json();
+                        alert(error.detail || 'Ошибка авторизации');
+                    }
+                } catch (e) {
+                    console.error('Ошибка:', e);
+                    alert('Произошла ошибка при выполнении запроса: ' + e.message);
+                }
+            }
+
+            // Вызываем функцию при загрузке страницы
+            document.addEventListener('DOMContentLoaded', list);
+
+            
+        </script>
+    </body>
+</html>

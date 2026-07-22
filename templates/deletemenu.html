@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #15590d;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+    
+        .frame{
+            border: 10px solid #fff;
+            padding: 12px 24px;
+
+        }
+
+        h1{
+            color: #ffffff;
+        }
+
+        h2{
+            color: #15590d;
+        }
+
+        .container{
+            background-color: #fff;
+            text-align: center;
+            min-width: 80%;
+            height: auto;
+            padding: 12px 12px;
+            border-radius: 0%;
+        }
+
+        .ots{
+            padding: 8px 12px;
+        }
+
+        button{
+            border-radius: 1%;
+            background-color:#15590d;
+            color: #fff;
+            font-size: 24px;
+            stroke-color: #fff;
+        }
+
+        input{
+            color: #15590d;
+        }
+    </style>
+    <div class="frame">
+        <h1>Меню редактирования</h1>
+        <div class="container">
+            <h2>Сменить название мероприятия</h2>
+            <p></p>
+            <input id="current" type="text" placeholder="Текущее название...">
+            <p></p>
+            <input id="new" type="text" placeholder="Новое название...">
+            <p></p>
+            <button onclick="rename()">Переименовать</button>
+
+
+            <div class="ots"></div>
+            <h2>Удалить мероприятие</h2>
+            <p></p>
+            <input id="deletename" placeholder="Текущее название...">
+            <p></p>
+            <button onclick="delte()">Удалить</button>
+
+            <div class="ots"></div>
+            <h2>Записаться на мероприятие</h2>
+            <p></p>
+            <input id="eventname" type="text" placeholder="Название мероприятия...">
+            <p></p>
+            <button onclick="addplayer()">Добавить</button>
+
+            <div class="ots"></div>
+            <h2>Удалить учатсника</h2>
+            <input id="playerDELTE" type="text"  placeholder="Имя учатсника...">
+            <p></p>
+            <input id="eventDELTE" type="text" placeholder="Название мероприятия...">
+            <p></p>
+            <button onclick="deleteplayer()">Удалить</button>
+            
+        </div>
+    </div>
+    <script>
+            async function rename() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const current = document.getElementById('current').value;
+            const newest = document.getElementById('new').value;
+            
+            const response = await fetch("/rename?token="+token, {
+                method: "POST",
+                headers: { "Accept": "application/json", "Content-Type": "application/json", 'Authorization':'Bearer '+token},
+                body: JSON.stringify({'current':current, 'new':newest, 'token':token})
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert('Успешно!')
+            } else {
+                console.log(response);
+            }
+        }
+
+        async function delte() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const deleteName = document.getElementById('deletename').value;
+
+            const response = await fetch("/deleteevent?token="+token, {
+                method: "POST",
+                headers: { "Accept": "application/json", "Content-Type": "application/json", 'Authorization':'Bearer '+token},
+                body: JSON.stringify({'deletename':deleteName, 'token':token})
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert('Успешно!')
+            } else {
+                console.log(response);
+            }
+        }
+        
+        async function addplayer() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const eventNameD = document.getElementById('eventname').value;
+            
+            const response = await fetch("/addplayer?token="+token, {
+                method: "POST",
+                headers: { "Accept": "application/json", "Content-Type": "application/json", 'Authorization':'Bearer '+token},
+                body: JSON.stringify({'eventname':eventNameD, 'token':token})
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert('Успешно!')
+            } else {
+                console.log(response);
+            }
+        }
+
+        async function deleteplayer() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const playerName = document.getElementById('playerDELTE').value;
+            const eventName = document.getElementById('eventDELTE').value;
+            
+            const response = await fetch("/deletePLAYER?token="+token, {
+                method: "POST",
+                headers: { "Accept": "application/json", "Content-Type": "application/json", 'Authorization':'Bearer '+token},
+                body: JSON.stringify({'player':playerName, 'eventname':eventName, 'token':token})
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert('Успешно!')
+            } else {
+                console.log(response);
+            }
+        }
+    </script>
+</html>

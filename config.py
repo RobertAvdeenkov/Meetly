@@ -1,0 +1,2 @@
+ALGORITHM='HS256'
+SECRET='arv@h2so4'
