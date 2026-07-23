@@ -1,11 +1,14 @@
 from models import User as User,Event
+import bcrypt
 
 class TasksRepositry:
     def __init__(self,db):
         self.db=db
 
     def add_user(self, name,password):
-        target=User(name=name, password=password)
+        salt=bcrypt.gensalt()
+        hashed=bcrypt.hashpw(password=password.encode(encoding='utf-8'), salt=salt)
+        target=User(name=name, password=hashed)
         self.db.add(target)
         self.db.commit()
         return target
