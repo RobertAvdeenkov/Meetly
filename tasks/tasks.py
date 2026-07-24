@@ -25,8 +25,6 @@ def root():
 def pat(path):
     if path.endswith('.html'):
         return FileResponse(path)
-    else:
-        return Response(content='<h2>Такая страничка не найдена :(<h2>', media_type='tetx/html')
 
 
 @router.post('/reglog')
