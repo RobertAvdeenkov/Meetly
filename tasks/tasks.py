@@ -32,7 +32,7 @@ def reglog(data=Body(), db:Session=Depends(get_db)):
             user=db.query(User).filter(User.name==data['name']).first()
             if user:
                 log_action(user_id=user.id, entity='user', details='Создание аккаунта')
-        elif not(bcrypt.checkpw(password=data['password'].encode('utf-8'), hashed_password=bytes(user.password, encoding='utf-8'))):
+        elif not(bcrypt.checkpw(password=data['password'].encode('utf-8'), hashed_password=user.password)):
             raise HTTPException(401)
         token=create_token(user.name)
         return {'status':'ok', 'redirect_url':f'/account?token={token}'}
