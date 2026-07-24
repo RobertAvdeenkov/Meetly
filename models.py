@@ -16,7 +16,7 @@ class User(Base):
     __tablename__='users'
     id=Column(Integer,primary_key=True,index=True)
     name=Column(String)
-    password=Column(BLOB)
+    password=Column(String)
     role=Column(String,default='user')
     events=relationship('Event', secondary=participants, back_populates='users')
     audit_logs = relationship("AutLog", back_populates="user")
