@@ -18,10 +18,10 @@ class User(Base):
     name=Column(String)
     password=Column(String)
     role=Column(String,default='user')
-    events=relationship('Event', secondary=participants, back_populates='users', index=True)
-    audit_logs = relationship("AutLog", back_populates="user", index=True)
-    created_events = relationship('Event', back_populates='creator', index=True)
-    messages=relationship('Message', back_populates='user', index=True)
+    events=relationship('Event', secondary=participants, back_populates='users')
+    audit_logs = relationship("AutLog", back_populates="user")
+    created_events = relationship('Event', back_populates='creator')
+    messages=relationship('Message', back_populates='user')
 
 class Event(Base):
     __tablename__='events'
@@ -34,9 +34,9 @@ class Event(Base):
     tags=Column(String, default='')
 
     creator_id = Column(Integer, ForeignKey('users.id'), index=True)
-    creator = relationship("User", back_populates="created_events", index=True)
+    creator = relationship("User", back_populates="created_events")
 
-    users=relationship('User', secondary=participants, back_populates='events', index=True)
+    users=relationship('User', secondary=participants, back_populates='events')
 
 class AutLog(Base):
     __tablename__='log'
@@ -45,13 +45,13 @@ class AutLog(Base):
     entity=Column(String)
     info=Column(String, default='')
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    user = relationship("User", back_populates="audit_logs", index=True)
+    user = relationship("User", back_populates="audit_logs")
 
 class Message(Base):
     __tablename__='messages'
-    id=Column(Integer, primary_key=True, index=True)
+    id=Column(Integer, primary_key=True)
     sender_name=Column(String)
     info=Column(String)
-    to_id=Column(Integer, ForeignKey('users.id'))
-    user=relationship('User', back_populates='messages',index=True)
+    to_id=Column(Integer, ForeignKey('users.id'), index=True)
+    user=relationship('User', back_populates='messages')
     created_at = Column(DateTime(timezone=True), server_default=func.now())
