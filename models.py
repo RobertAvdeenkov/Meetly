@@ -41,7 +41,7 @@ class Event(Base):
 class AutLog(Base):
     __tablename__='log'
     id=Column(Integer,primary_key=True)
-    user_id=Column(Integer, ForeignKey('users.id'))
+    user_id=Column(Integer, ForeignKey('users.id'), index=True)
     entity=Column(String)
     info=Column(String, default='')
     created_at = Column(DateTime(timezone=True), server_default=func.now())
