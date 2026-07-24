@@ -8,6 +8,7 @@ class TasksRepositry:
     def add_user(self, name,password):
         salt=bcrypt.gensalt()
         hashed=bcrypt.hashpw(password=password.encode(encoding='utf-8'), salt=salt)
+        hashed=hashed.decode('utf-8')
         target=User(name=name, password=hashed)
         self.db.add(target)
         self.db.commit()
