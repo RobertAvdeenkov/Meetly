@@ -14,18 +14,18 @@ participants = Table(
 
 class User(Base):
     __tablename__='users'
-    id=Column(Integer,primary_key=True,index=True)
+    id=Column(Integer,primary_key=True)
     name=Column(String)
     password=Column(String)
     role=Column(String,default='user')
-    events=relationship('Event', secondary=participants, back_populates='users')
-    audit_logs = relationship("AutLog", back_populates="user")
-    created_events = relationship('Event', back_populates='creator')
-    messages=relationship('Message', back_populates='user')
+    events=relationship('Event', secondary=participants, back_populates='users', index=True)
+    audit_logs = relationship("AutLog", back_populates="user", index=True)
+    created_events = relationship('Event', back_populates='creator', index=True)
+    messages=relationship('Message', back_populates='user', index=True)
 
 class Event(Base):
     __tablename__='events'
-    id=Column(Integer,primary_key=True,index=True)
+    id=Column(Integer,primary_key=True)
     name=Column(String)
     type=Column(String)
     desc=Column(String)
@@ -33,19 +33,19 @@ class Event(Base):
     place=Column(String)
     tags=Column(String, default='')
 
-    creator_id = Column(Integer, ForeignKey('users.id'))
-    creator = relationship("User", back_populates="created_events")
+    creator_id = Column(Integer, ForeignKey('users.id'), index=True)
+    creator = relationship("User", back_populates="created_events", index=True)
 
-    users=relationship('User', secondary=participants, back_populates='events')
+    users=relationship('User', secondary=participants, back_populates='events', index=True)
 
 class AutLog(Base):
     __tablename__='log'
-    id=Column(Integer,primary_key=True, index=True)
+    id=Column(Integer,primary_key=True)
     user_id=Column(Integer, ForeignKey('users.id'))
     entity=Column(String)
     info=Column(String, default='')
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    user = relationship("User", back_populates="audit_logs")
+    user = relationship("User", back_populates="audit_logs", index=True)
 
 class Message(Base):
     __tablename__='messages'
@@ -53,5 +53,5 @@ class Message(Base):
     sender_name=Column(String)
     info=Column(String)
     to_id=Column(Integer, ForeignKey('users.id'))
-    user=relationship('User', back_populates='messages')
+    user=relationship('User', back_populates='messages',index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
