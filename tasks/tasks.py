@@ -21,12 +21,6 @@ router=APIRouter()
 def root():
     return FileResponse('templates/reglog.html')
 
-@router.get('/{path}')
-def pat(path):
-    if path.endswith('.html'):
-        return FileResponse(path)
-
-
 @router.post('/reglog')
 def reglog(data=Body(), db:Session=Depends(get_db)):
     repo=TasksRepositry(db)
@@ -442,3 +436,8 @@ def uvedSHOW(token=Body(), db:Session=Depends(get_db)):
     except Exception as e:
         print("ERROR:",e)
         raise HTTPException(401)
+
+@router.get('/{path}')
+def pat(path):
+    if path.endswith('.html'):
+        return FileResponse(path)
