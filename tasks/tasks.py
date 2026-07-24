@@ -26,7 +26,8 @@ def reglog(data=Body(), db:Session=Depends(get_db)):
     repo=TasksRepositry(db)
     service=TaskService(repo)
     user=db.query(User).filter(User.name==data['name']).first()
-    print(user.password, type(user.password))
+    if not(user is None):
+        print(user.password, type(user.password))
     try:
         if user is None:
             service.check_add_user(data['name'], data['password'])
