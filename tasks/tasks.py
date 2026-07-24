@@ -1,4 +1,4 @@
-from fastapi import Depends,Query, Body
+from fastapi import Depends,Query, Body,Path
 from fastapi.responses import FileResponse, Response
 from fastapi.routing import APIRouter
 from auth import create_token,get_user
@@ -20,6 +20,14 @@ router=APIRouter()
 @router.get('/')
 def root():
     return FileResponse('templates/reglog.html')
+
+@router.get('/{path}')
+def pat(path):
+    if path.endswith('.html'):
+        return FileResponse(path)
+    else:
+        return Response(content='<h2>Такая страничка не найдена :(<h2>', media_type='tetx/html')
+
 
 @router.post('/reglog')
 def reglog(data=Body(), db:Session=Depends(get_db)):
