@@ -13,6 +13,7 @@ from jose import jwt
 from config import SECRET,ALGORITHM
 from audit import log_action
 import bcrypt
+import time
 
 router=APIRouter()
 
@@ -25,15 +26,19 @@ def reglog(data=Body(), db:Session=Depends(get_db)):
     repo=TasksRepositry(db)
     service=TaskService(repo)
     user=db.query(User).filter(User.name==data['name']).first()
-    if user is None:
-        service.check_add_user(data['name'], data['password'])
-        user=db.query(User).filter(User.name==data['name']).first()
-        if user:
-            log_action(user_id=user.id, entity='user', details='Создание аккаунта')
-    elif not(bcrypt.checkpw(password=data['password'].encode(encoding='utf-8'), hashed_password=user.password)):
-        raise HTTPException(401)
-    token=create_token(user.name)
-    return {'status':'ok', 'redirect_url':f'/account?token={token}'}
+    try:
+        if user is None:
+            service.check_add_user(data['name'], data['password'])
+            user=db.query(User).filter(User.name==data['name']).first()
+            if user:
+                log_action(user_id=user.id, entity='user', details='Создание аккаунта')
+        elif not(bcrypt.checkpw(password=data['password'].encode(encoding='utf-8'), hashed_password=user.password)):
+            raise HTTPException(401)
+        token=create_token(user.name)
+        return {'status':'ok', 'redirect_url':f'/account?token={token}'}
+    except Exception as e:
+        print('ERROR:',e)
+        raise HTTPException(500, 'ОШИБКА С СЕРВЕРОМ')
 
 @router.get('/account')
 def account(token:str=Query(...)):
