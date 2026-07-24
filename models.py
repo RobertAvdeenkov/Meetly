@@ -1,4 +1,4 @@
-from sqlalchemy import Column,String,Integer,ForeignKey,create_engine,DateTime, Table
+from sqlalchemy import Column,String,Integer,ForeignKey,create_engine,DateTime, Table, BLOB
 from sqlalchemy.orm import DeclarativeBase,relationship
 from sqlalchemy import func
 
@@ -16,7 +16,7 @@ class User(Base):
     __tablename__='users'
     id=Column(Integer,primary_key=True,index=True)
     name=Column(String)
-    password=Column(String)
+    password=Column(BLOB)
     role=Column(String,default='user')
     events=relationship('Event', secondary=participants, back_populates='users')
     audit_logs = relationship("AutLog", back_populates="user")
