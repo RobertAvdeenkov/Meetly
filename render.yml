@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: meetly
+    runtime: static
+    buildCommand: echo "Static site"
+    staticPublishPath: .
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /mainpage.html
