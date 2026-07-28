@@ -1,5 +1,5 @@
-from fastapi import Depends,Query, Body,Path
-from fastapi.responses import FileResponse, Response
+from fastapi import Depends,Query, Body,Path, Request
+from fastapi.responses import FileResponse, Response, JSONResponse
 from fastapi.routing import APIRouter
 from auth import create_token,get_user
 from sqlalchemy.orm import Session
@@ -18,7 +18,7 @@ import time
 router=APIRouter()
 
 @router.get('/')
-def root():
+def root(request:Request):
     return FileResponse('templates/reglog.html')
 
 @router.post('/reglog')
@@ -53,9 +53,10 @@ def add(name: str = Form(...),date: str = Form(...),place: str = Form(...),type:
         user=db.query(User).filter(User.name==data['sub']).first()
         repo=TasksRepositry(db)
         service=TaskService(repo)
-    
-        service.check_add_event(name=name, type=type, user_id=user.id, desc=desc, place=place, end_at=date, tags=tags)
-        log_action(user_id=user.id, entity='event', details=f'Добавление мероприятия {name}')
+        print(tags, desc)
+        if user:
+            service.check_add_event(name=name, type=type, user_id=user.id, desc=desc, place=place, end_at=date, tags=tags)
+            log_action(user_id=user.id, entity='event', details=f'Добавление мероприятия {name}')
     except Exception as e:
         print('ERROR:',e)
         raise HTTPException(401)
