@@ -155,6 +155,39 @@
                 }
             }
 
+            async function like(id) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token');
+                const response = await fetch("/like?token="+token+'&id='+id, {
+                    method: "POST",
+                    headers: { "Accept": "application/json", "Content-Type": "application/json", 'Authorization':'Bearer '+token},
+                    body: JSON.stringify({'token':token, 'id':id})
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert('Успешно!')
+                } else {
+                    console.log(response);
+                }
+            }
+
+            async function unlike(id) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token');
+                const response = await fetch("/unlike?token="+token+'&id='+id, {
+                    method: "DELETE",
+                    headers: { "Accept": "application/json", "Content-Type": "application/json", 'Authorization':'Bearer '+token},
+                    body: JSON.stringify({'token':token, 'id':id})
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert('Успешно!')
+                } else {
+                    console.log(response);
+                }
+            }
             // Вызываем функцию при загрузке страницы
         </script>
     </body>

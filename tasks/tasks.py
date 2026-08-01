@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from taskrepo import TasksRepositry
 from taskservice import TaskService
-from models import User, Event,AutLog,Message
+from models import User, Event,AutLog,Message,Likes
 from fastapi import HTTPException
 from fastapi import Form
 from jose import jwt
@@ -23,11 +23,14 @@ def root(request:Request):
 
 @router.post('/reglog')
 def reglog(data=Body(), db:Session=Depends(get_db)):
-    repo=TasksRepositry(db)
-    service=TaskService(repo)
-    user=db.query(User).filter(User.name==data['name']).first()
-    if user:
-        print(user.password, type(user.password))
+    try:
+        repo=TasksRepositry(db)
+        service=TaskService(repo)
+        user=db.query(User).filter(User.name==data['name']).first()
+        if user:
+            print(user.password, type(user.password))
+    except Exception as e:
+        print(e)
     try:
         if user is None:
             service.check_add_user(data['name'], data['password'])
@@ -47,7 +50,7 @@ def account(token:str=Query(...)):
     return FileResponse('templates/mainpage.html')
 
 @router.post('/add')
-def add(name: str = Form(...),date: str = Form(...),place: str = Form(...),type: str = Form(...),desc: str = Form(...),token: str = Query(...), tags:str=Form(...),db: Session = Depends(get_db),):
+def add(name: str = Form(...),date: str = Form(...),place: str = Form(...),type: str = Form(...),desc: str = Form(...),token: str = Query(...), tags:str=Form(...),db: Session = Depends(get_db)):
     try:
         data=jwt.decode(token, SECRET, algorithms=[ALGORITHM])
         user=db.query(User).filter(User.name==data['sub']).first()
@@ -182,7 +185,10 @@ def showlist(db:Session=Depends(get_db), token=Body()):
                 message+=str(i.name)+f'(дата окончания:{i.end_at})'+f'Место:{i.place}'+f'<br>Информация: {i.desc}<br>Участники'+'{'+'<br>'
                 for j in i.users:
                     message+=''+str(j.name)+','+'<br>'
-                message+='}'+'<br><br>'
+                message+='}'+'<br><br>'+f'<p></p>'
+                message+=f'{i.like_count} лайков'
+                message+=f'''<button onclick="like({i.id})">Лайк</button>
+                <button onclick="unlike({i.id})">Убрать лайк</button>'''
         print(message)
         return {'status':'ok', 'message':message}
     except Exception as e:
@@ -300,8 +306,9 @@ def globalSHOW(db:Session=Depends(get_db)):
                 if len(i.users)>=count and i.name not in already:
                     count=len(i.users)
                     name=str(i.name)
-                    txt=f'<br>Мероприятие:{i.name}\tДата окончания:{i.end_at}\tМесто:{i.place}<br>Кол-во участников:{len(i.users)}<br>Информация: {i.desc}<br><br>'
-                
+                    txt=f'<br>Мероприятие:{i.name}\tДата окончания:{i.end_at}\tМесто:{i.place}<br>Кол-во участников:{len(i.users)}<br>Информация: {i.desc}<br>{i.like_count} лайков<br>'
+                    txt+=f'''<button onclick="like({i.id})">Лайк</button>
+                    <button onclick="unlike({i.id})">Убрать лайк</button>'''
             already.add(name)
             top+=txt
         print(top)
@@ -336,7 +343,9 @@ def searchSHOW(token=Body(), db:Session=Depends(get_db)):
     for i in events:
         tag=str(i.tags).split('#')
         if check(tag, tags):
-            txt+=f'<br>Мероприятие:{i.name}\tДата окончания:{i.end_at}<br>Место:{i.place}\tКол-во участников:{len(i.users)}<br>Информация: {i.desc}<br><br>'
+            txt+=f'<br>Мероприятие:{i.name}\tДата окончания:{i.end_at}<br>Место:{i.place}\tКол-во участников:{len(i.users)}<br>Информация: {i.desc}<br>{i.like_count} лайков<br><br>'
+            txt+=f'''<button onclick="like({i.id})">Лайк</button>
+                <button onclick="unlike({i.id})">Убрать лайк</button>'''
     if txt:
         return {'status':'ok', 'message':txt}
     else:
@@ -442,3 +451,53 @@ def uvedSHOW(token=Body(), db:Session=Depends(get_db)):
 def pat(path):
     if path.endswith('.html'):
         return FileResponse(path)
+
+@router.post('/like')
+def like(token=Body(), db:Session=Depends(get_db)):
+    print(token)
+    try:
+        data=jwt.decode(token['token'],SECRET,algorithms=[ALGORITHM])
+        user=db.query(User).filter(User.name==data['sub']).first()
+        target=db.query(Likes).filter(Likes.user_id==user.id, Likes.event_id==token['id']).first()
+        targetEVENT=db.query(Event).filter(Event.id==token['id']).first()
+        print(target)
+        if target:
+            raise HTTPException(401, 'Мероприятие уже лайкнуто')
+        else:
+            target=Likes(user_id=user.id, event_id=token['id'])
+            targetEVENT.like_count+=1
+            db.add(target)
+            db.commit()
+    except Exception as e:
+        print(e)
+        raise HTTPException(401, 'Произошла ошибка')
+
+@router.delete('/unlike')
+def unlike(token=Body(), db:Session=Depends(get_db)):
+    try:
+        data=jwt.decode(token['token'],SECRET,algorithms=[ALGORITHM])
+        user=db.query(User).filter(User.name==data['sub']).first()
+        targetEVENT=db.query(Event).filter(Event.id==token['id']).first()
+        if not user or not token['id']:
+            raise ValueError('Not enough')
+        target=db.query(Likes).filter(Likes.user_id==user.id, Likes.event_id==token['id']).first()
+        if target is None:
+            raise HTTPException(401, 'Лайк еще не поставлен')
+        targetEVENT.like_count-=1
+        db.delete(target)
+        db.commit()
+    except Exception as e:
+        print(e)
+        raise HTTPException(401, 'Произошла ошибка')
+
+@router.get('/likingp')
+def liking(db:Session=Depends(get_db), token=Query(...), id=Query(...)):
+    try:
+        print('started')
+        data=jwt.decode(token,SECRET,algorithms=[ALGORITHM])
+        target=db.query(Event).filter(Event.id==id).first()
+        print(target.likes)
+        print('ended')
+        return Response(content='ended', media_type='text/plain')
+    except Exception as e:
+        print('ERROR:',e)

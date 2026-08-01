@@ -22,6 +22,7 @@ class User(Base):
     audit_logs = relationship("AutLog", back_populates="user")
     created_events = relationship('Event', back_populates='creator')
     messages=relationship('Message', back_populates='user')
+    likes=relationship('Likes', back_populates='user')
 
 class Event(Base):
     __tablename__='events'
@@ -37,6 +38,9 @@ class Event(Base):
     creator = relationship("User", back_populates="created_events")
 
     users=relationship('User', secondary=participants, back_populates='events')
+
+    likes=relationship('Likes', back_populates='event')
+    like_count=Column(Integer, default=0, index=True, nullable=False)
 
 class AutLog(Base):
     __tablename__='log'
@@ -55,3 +59,13 @@ class Message(Base):
     to_id=Column(Integer, ForeignKey('users.id'), index=True)
     user=relationship('User', back_populates='messages')
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class Likes(Base):
+    __tablename__='likes'
+    id=Column(Integer, primary_key=True)
+    user_id=Column(Integer, ForeignKey('users.id'), index=True)
+    event_id=Column(Integer, ForeignKey('events.id'), index=True)
+
+    event=relationship('Event', back_populates='likes')
+
+    user=relationship('User', back_populates='likes')
