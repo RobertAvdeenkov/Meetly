@@ -4,7 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 import sys
 from pathlib import Path
-
+import os 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from main import Base
 from alembic import context
@@ -42,7 +42,11 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url=os.getenv("DATABASE_URL")
+    if url:
+        config.set_main_option("sqlalchemy.url", url)
+    else:
+        url =config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
