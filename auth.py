@@ -1,9 +1,9 @@
 from jose import jwt
-import jose.exceptions
+from jose.exceptions import JWTError,ExpiredSignatureError
 from config import SECRET,ALGORITHM
 from datetime import datetime,timedelta
 from fastapi.security import OAuth2PasswordBearer
-from fastapi import Depends
+from fastapi import Depends,HTTPException
 
 oauth=OAuth2PasswordBearer(tokenUrl='reglog')
 
@@ -21,4 +21,13 @@ def get_user(token:str=Depends(oauth)):
         return data['sub']
     except Exception as e:
         print('Error:',e)
+
+def get_by_token(token:str):
+    try:
+        data=jwt.decode(token,SECRET, algorithms=[ALGORITHM])
+        return data['sub']
+    except ExpiredSignatureError:
+            raise HTTPException(401, 'Токен протух!')
+    except JWTError:
+        raise HTTPException(401, 'Неверный токен')
         

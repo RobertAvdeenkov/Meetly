@@ -1,7 +1,7 @@
 from fastapi import Depends,Query, Body,Path, Request
 from fastapi.responses import FileResponse, Response, JSONResponse
 from fastapi.routing import APIRouter
-from auth import create_token,get_user
+from auth import create_token,get_user, get_by_token
 from sqlalchemy.orm import Session
 from database import get_db
 from taskrepo import TasksRepositry
@@ -23,15 +23,12 @@ def root(request:Request):
 
 @router.post('/reglog')
 def reglog(data=Body(), db:Session=Depends(get_db)):
-    try:
         repo=TasksRepositry(db)
         service=TaskService(repo)
         user=db.query(User).filter(User.name==data['name']).first()
         if user:
             print(user.password, type(user.password))
-    except Exception as e:
-        print(e)
-    try:
+
         if user is None:
             service.check_add_user(data['name'], data['password'])
             user=db.query(User).filter(User.name==data['name']).first()
@@ -41,9 +38,7 @@ def reglog(data=Body(), db:Session=Depends(get_db)):
             raise HTTPException(401)
         token=create_token(user.name)
         return {'status':'ok', 'redirect_url':f'/account?token={token}'}
-    except Exception as e:
-        print('ERROR:',e)
-        raise HTTPException(401)
+
 
 @router.get('/account')
 def account(token:str=Query(...)):
@@ -51,92 +46,71 @@ def account(token:str=Query(...)):
 
 @router.post('/add')
 def add(name: str = Form(...),date: str = Form(...),place: str = Form(...),type: str = Form(...),desc: str = Form(...),token: str = Query(...), tags:str=Form(...),db: Session = Depends(get_db)):
-    try:
-        data=jwt.decode(token, SECRET, algorithms=[ALGORITHM])
-        user=db.query(User).filter(User.name==data['sub']).first()
-        repo=TasksRepositry(db)
-        service=TaskService(repo)
-        print(tags, desc)
-        if user:
-            service.check_add_event(name=name, type=type, user_id=user.id, desc=desc, place=place, end_at=date, tags=tags)
-            log_action(user_id=user.id, entity='event', details=f'Добавление мероприятия {name}')
-    except Exception as e:
-        print('ERROR:',e)
-        raise HTTPException(401)
+    data=get_by_token(token)
+    user=db.query(User).filter(User.name==data).first()
+    repo=TasksRepositry(db)
+    service=TaskService(repo)
+    print(tags, desc)
+    if user:
+        service.check_add_event(name=name, type=type, user_id=user.id, desc=desc, place=place, end_at=date, tags=tags)
+        log_action(user_id=user.id, entity='event', details=f'Добавление мероприятия {name}')
+    return {'message':'success'}
 
 @router.post('/deletemenuRED')
 def deletemenuRED(token=Body()):
-    try:
-        n=token['token']
-        data=jwt.decode(n,SECRET,algorithms=[ALGORITHM])
-        return {'status':'ok', 'redirect_url':f'/deletemenu?token={n}'}
-    except:
-        raise HTTPException(401)
+    n=token['token']
+    data=get_by_token(n)
+    return {'status':'ok', 'redirect_url':f'/deletemenu?token={n}'}
+
 
 @router.get('/deletemenu')
 def deletemenu(token:str=Query(...)):
-    try:
-        data=jwt.decode(token,SECRET,algorithms=[ALGORITHM])
-        return FileResponse('templates/deletemenu.html')
-    except:
-        raise HTTPException(401)
+    data=get_by_token(token)
+    return FileResponse('templates/deletemenu.html')
     
 @router.post('/rename')
 def rename(token=Body(), db:Session=Depends(get_db)):
-    try:
-        print(token)
-        data=jwt.decode(token['token'],SECRET,algorithms=[ALGORITHM])
-        user=db.query(User).filter(User.name==data['sub']).first()
+        data=get_by_token(token['token'])
+        user=db.query(User).filter(User.name==data).first()
         target=db.query(Event).filter(Event.name==token['current'], Event.creator_id==user.id).first()
         old=target.name
         target.name=token['new']
         db.commit()
         log_action(user_id=user.id, entity='event', details=f'Переименование мероприятия {old} на {target.name}')
-    except Exception as e:
-        print("ERROR:",e)
     
 @router.post('/deleteevent')
 def deleteEvent(token=Body(), db:Session=Depends(get_db)):
-    try:
-        data=jwt.decode(token['token'],SECRET,algorithms=[ALGORITHM])
+        data=get_by_token(token['token'])
         repo=TasksRepositry(db)
         service=TaskService(repo)
-        user=db.query(User).filter(User.name==data['sub']).first()
+        user=db.query(User).filter(User.name==data).first()
         service.check_delete_event(user_id=user.id, name=token['deletename'])
         log_action(user_id=user.id, entity='event', details=f'Удаление мероприятия {token['deletename']}')
-    except Exception as e:
-        print('ERROR:',e)
 
 @router.post('/addplayer')
 def addplayer(token=Body(), db:Session=Depends(get_db)):
-    try:
-        data=jwt.decode(token['token'],SECRET,algorithms=[ALGORITHM])
+        data=get_by_token(token['token'])
         repo=TasksRepositry(db)
         service=TaskService(repo)
-        user=db.query(User).filter(User.name==data['sub']).first()
+        user=db.query(User).filter(User.name==data).first()
         event=db.query(Event).filter(Event.name==token['eventname']).first()
         if event is None:
             raise HTTPException(401, 'Такого мероприятия нету')
-        service.check_add_player(name=data['sub'], event_id=event.id)
+        service.check_add_player(name=data, event_id=event.id)
         log_action(user_id=user.id, entity='player', details=f'Запись в {event.name}')
-    except Exception as e:
-        print('ERROR:',e)
 
 @router.post('/deletePLAYER')
 def deleteplayer(token=Body(), db:Session=Depends(get_db)):
-    try:
-        data=jwt.decode(token['token'],SECRET,algorithms=[ALGORITHM])
+        data=get_by_token(token['token'])
         repo=TasksRepositry(db)
         service=TaskService(repo)
         print('checking')
-        user=db.query(User).filter(User.name==data['sub']).first()
+        user=db.query(User).filter(User.name==data).first()
         event=db.query(Event).filter(Event.name==token['eventname'], Event.creator_id==user.id).first()
         if not user or not event:
             raise HTTPException(401)
         service.check_delete_player(name=token['player'], event_id=event.id)
         log_action(user_id=user.id, entity='event', details=f'Удаление участника {token['player']} из {event.name}')
-    except Exception as e:
-        print('ERROR:',e)
 
 @router.post('/staticRED')
 def staticRED(db:Session=Depends(get_db)):
@@ -159,12 +133,9 @@ def info():
 
 @router.post('/listRED')
 def listRED(token=Body()):
-    try:
         n=token['token']
-        data=jwt.decode(n,SECRET,algorithms=[ALGORITHM])
+        data=get_by_token(n)
         return {'status':'ok', 'redirect_url':f'/list?token={n}'}
-    except:
-        raise HTTPException(401)
 
 @router.get('/list')
 def lists():
@@ -172,14 +143,14 @@ def lists():
 
 @router.post('/showlist')
 def showlist(db:Session=Depends(get_db), token=Body()):
-    try:
-        data=jwt.decode(token['token'],SECRET,algorithms=[ALGORITHM])
+    
+        data=get_by_token(token['token'])
         repo=TasksRepositry(db)
         service=TasksRepositry(repo)
         message=''
         print('started')
         events=db.query(Event).all()
-        users=db.query(User).filter(User.name==data['sub']).first()
+        users=db.query(User).filter(User.name==data).first()
         for i in events:
             if users in i.users:
                 message+=str(i.name)+f'(дата окончания:{i.end_at})'+f'Место:{i.place}'+f'<br>Информация: {i.desc}<br>Участники'+'{'+'<br>'
@@ -191,17 +162,14 @@ def showlist(db:Session=Depends(get_db), token=Body()):
                 <button onclick="unlike({i.id})">Убрать лайк</button>'''
         print(message)
         return {'status':'ok', 'message':message}
-    except Exception as e:
-        print('ERROR:',e)
     
 @router.post('/topmenuRED')
 def topRED(token=Body()):
-    try:
+    
         n=token['token']
-        data=jwt.decode(n,SECRET,algorithms=[ALGORITHM])
+        data=get_by_token(n)
         return {'status':'ok', 'redirect_url':f'/topmenu?token={n}'}
-    except:
-        raise HTTPException(401)
+    
     
 @router.get('/topmenu')
 def topmenu():
@@ -210,10 +178,10 @@ def topmenu():
 @router.post('/topmenuSHOW')
 def showtopmenu(db:Session=Depends(get_db), token=Body()):
     try:
-        data=jwt.decode(token['token'],SECRET,algorithms=[ALGORITHM])
+        data=get_by_token(token['token'])
         repo=TasksRepositry(db)
         service=TasksRepositry(repo)
-        l=db.query(User).filter(User.name==data['sub']).first()
+        l=db.query(User).filter(User.name==data).first()
         top=''
         already=set()
         for j in l.events:
@@ -232,12 +200,9 @@ def showtopmenu(db:Session=Depends(get_db), token=Body()):
 
 @router.post('/historyRED')
 def historyRED(token=Body()):
-    try:
         n=token['token']
-        data=jwt.decode(n,SECRET,algorithms=[ALGORITHM])
+        data=get_by_token(n)
         return {'status':'ok', 'redirect_url':f'/history?token={n}'}
-    except:
-        raise HTTPException(401)
     
 @router.get('/history')
 def history():
@@ -245,23 +210,18 @@ def history():
 
 @router.post('/historySHOW')
 def historySHOW(db:Session=Depends(get_db), token=Body()):
-    try:
-        data=jwt.decode(token['token'],SECRET,algorithms=[ALGORITHM])
-        user=db.query(User).filter(User.name==data['sub']).first()
+        data=get_by_token(token['token'])
+        user=db.query(User).filter(User.name==data).first()
         l=db.query(AutLog).filter(AutLog.user_id==user.id).all()
         txt=''
         for i in l:
             txt+=str(i.info)+str(i.created_at)+'<br>'
         return {'status':'ok', 'message':txt}
-    except Exception as e:
-        print('ERROR:',e)
-        raise HTTPException(401)
     
 @router.get('/logs')
 def logs(db:Session=Depends(get_db), token=Query(...)):
-    try:
-        data=jwt.decode(token,SECRET,algorithms=[ALGORITHM])
-        user=db.query(User).filter(User.name==data['sub']).first()
+        data=get_by_token(token)
+        user=db.query(User).filter(User.name==data).first()
         l=db.query(AutLog).all()
         if not user:
             raise HTTPException(401)
@@ -272,16 +232,12 @@ def logs(db:Session=Depends(get_db), token=Query(...)):
             for i in l:
                 txt+=str(i.created_at)+'\t'+str(i.user_id)+'\t'+str(i.info)+'\t'+str(i.entity)
             return Response(content=txt, media_type='text/plain')
-    except Exception as e:
-        print("ERROR:",e)
-        raise e
+
     
 @router.post('/globalRED')
 def globalRED(token=Body()):
-    try:
+        get_by_token(token['token'])
         return {'status':'ok', 'redirect_url':f'/global?token={token['token']}'}
-    except Exception as e:
-        print("ERROR:",e)
 
 @router.get('/global')
 def globall(token=Query(...)):
@@ -318,12 +274,8 @@ def globalSHOW(db:Session=Depends(get_db)):
 
 @router.post('/searchRED')
 def searchRED(token=Body()):
-    try:
-        data=jwt.decode(token['token'],SECRET,algorithms=[ALGORITHM])
+        data=get_by_token(token['token'])
         return {'status':'ok', 'redirect_url':f'/search?token={token['token']}'}
-    except Exception as e:
-        print("ERROR:",e)
-        raise HTTPException(401)
     
 @router.get('/search')
 def search():
@@ -353,11 +305,8 @@ def searchSHOW(token=Body(), db:Session=Depends(get_db)):
 
 @router.post('/profileRED')
 def profileRED(token=Body()):
-    try:
-        data=jwt.decode(token['token'],SECRET,algorithms=[ALGORITHM])
+        data=get_by_token(token['token'])
         return {'status':'ok', 'redirect_url':f'/profiles?token={token['token']}'}
-    except Exception as e:
-        print("ERROR:",e)
 
 @router.get('/profiles')
 def profile():
@@ -391,36 +340,24 @@ def profileSHOW(db:Session=Depends(get_db), n=Body()):
 
 @router.post('/writeletter')
 def writeletter(token=Body(), db:Session=Depends(get_db)):
-    try:
-        data=jwt.decode(token['token'],SECRET,algorithms=[ALGORITHM])
+        data=get_by_token(token['token'])
         sendto=db.query(User).filter(User.name==token['user']).first()
         if sendto is None:
             raise HTTPException(401, 'Такого пользователя нету')
-        mess=Message(sender_name=data['sub'], info=token['info'], to_id=sendto.id)
+        mess=Message(sender_name=data, info=token['info'], to_id=sendto.id)
         db.add(mess)
         db.commit()
         return {'status':'ok', 'message':'yes'}
-    except Exception as e:
-        print('ERROR:',e)
-        raise HTTPException(401)
 
 @router.post('/profileSEARCHING')
 def searchingprof(token=Body()):
-    try:
-        data=jwt.decode(token['token'],SECRET,algorithms=[ALGORITHM])
+        data=get_by_token(token['token'])
         return {'status':'ok', 'redirect_url':f'/profile?user={token['name']}&token={token['token']}'}
-    except Exception as e:
-        print("ERROR:",e)
-        raise HTTPException(401)
 
 @router.post('/uvedRED')
 def uvedRED(token=Body()):
-    try:
-        data=jwt.decode(token['token'],SECRET,algorithms=[ALGORITHM])
+        data=get_by_token(token['token'])
         return {'status':'ok', 'redirect_url':f'/uved?token={token['token']}'}
-    except Exception as e:
-        print("ERROR:",e)
-        raise HTTPException(401)
 
 @router.get('/uved')
 def uved():
@@ -428,9 +365,8 @@ def uved():
 
 @router.post('/uvedSHOW')
 def uvedSHOW(token=Body(), db:Session=Depends(get_db)):
-    try:
-        data=jwt.decode(token['token'],SECRET,algorithms=[ALGORITHM])
-        user=db.query(User).filter(User.name==data['sub']).first()
+        data=get_by_token(token['token'])
+        user=db.query(User).filter(User.name==data).first()
         messages=db.query(Message).filter(Message.to_id==user.id).all()
         txt=''
         if not user:
@@ -442,10 +378,6 @@ def uvedSHOW(token=Body(), db:Session=Depends(get_db)):
         for i in messages:
             txt+=f'<br>Отправитель:{i.sender_name}<br>Сообщение:{i.info}<br>Отправлено:{i.created_at}<br><br>'
         return {'status':'ok', 'message':txt}
-        
-    except Exception as e:
-        print("ERROR:",e)
-        raise HTTPException(401)
 
 @router.get('/{path}')
 def pat(path):
@@ -454,10 +386,9 @@ def pat(path):
 
 @router.post('/like')
 def like(token=Body(), db:Session=Depends(get_db)):
-    print(token)
-    try:
-        data=jwt.decode(token['token'],SECRET,algorithms=[ALGORITHM])
-        user=db.query(User).filter(User.name==data['sub']).first()
+        print(token)
+        data=get_by_token(token['token'])
+        user=db.query(User).filter(User.name==data).first()
         target=db.query(Likes).filter(Likes.user_id==user.id, Likes.event_id==token['id']).first()
         targetEVENT=db.query(Event).filter(Event.id==token['id']).first()
         print(target)
@@ -468,15 +399,13 @@ def like(token=Body(), db:Session=Depends(get_db)):
             targetEVENT.like_count+=1
             db.add(target)
             db.commit()
-    except Exception as e:
-        print(e)
-        raise HTTPException(401, 'Произошла ошибка')
+        return {'message':'success'}
+    
 
 @router.delete('/unlike')
 def unlike(token=Body(), db:Session=Depends(get_db)):
-    try:
-        data=jwt.decode(token['token'],SECRET,algorithms=[ALGORITHM])
-        user=db.query(User).filter(User.name==data['sub']).first()
+        data=get_by_token(token['token'])
+        user=db.query(User).filter(User.name==data).first()
         targetEVENT=db.query(Event).filter(Event.id==token['id']).first()
         if not user or not token['id']:
             raise ValueError('Not enough')
@@ -486,18 +415,13 @@ def unlike(token=Body(), db:Session=Depends(get_db)):
         targetEVENT.like_count-=1
         db.delete(target)
         db.commit()
-    except Exception as e:
-        print(e)
-        raise HTTPException(401, 'Произошла ошибка')
+    
 
 @router.get('/likingp')
 def liking(db:Session=Depends(get_db), token=Query(...), id=Query(...)):
-    try:
         print('started')
-        data=jwt.decode(token,SECRET,algorithms=[ALGORITHM])
+        data=get_by_token(token)
         target=db.query(Event).filter(Event.id==id).first()
         print(target.likes)
         print('ended')
         return Response(content='ended', media_type='text/plain')
-    except Exception as e:
-        print('ERROR:',e)
