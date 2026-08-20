@@ -26,9 +26,6 @@ def reglog(data=Body(), db:Session=Depends(get_db)):
         repo=TasksRepositry(db)
         service=TaskService(repo)
         user=db.query(User).filter(User.name==data['name']).first()
-        if user:
-            print(user.password, type(user.password))
-
         if user is None:
             service.check_add_user(data['name'], data['password'])
             user=db.query(User).filter(User.name==data['name']).first()
@@ -161,7 +158,7 @@ def showlist(db:Session=Depends(get_db), token=Body()):
                 message+=f'''<button onclick="like({i.id})">Лайк</button>
                 <button onclick="unlike({i.id})">Убрать лайк</button>'''
         print(message)
-        return {'status':'ok', 'message':message}
+        return {'status':'ok', 'message':message if message else 'Ничего не найдено'}
     
 @router.post('/topmenuRED')
 def topRED(token=Body()):
@@ -193,7 +190,7 @@ def showtopmenu(db:Session=Depends(get_db), token=Body()):
                 
             already.add(name)
             top+=str(i)+'\t'+str(name)+' - '+str(count)+' участника'+'<br>'
-        return {'status':'ok', 'message':top}
+        return {'status':'ok', 'message':top if top else 'Ничего не найдено'}
 
     except Exception as e:
         print("ERROR:",e)
@@ -216,7 +213,7 @@ def historySHOW(db:Session=Depends(get_db), token=Body()):
         txt=''
         for i in l:
             txt+=str(i.info)+str(i.created_at)+'<br>'
-        return {'status':'ok', 'message':txt}
+        return {'status':'ok', 'message':txt if txt else 'Ничего не найдено'}
     
 @router.get('/logs')
 def logs(db:Session=Depends(get_db), token=Query(...)):
@@ -268,7 +265,7 @@ def globalSHOW(db:Session=Depends(get_db)):
             already.add(name)
             top+=txt
         print(top)
-        return {'status':'ok', 'message':top}
+        return {'status':'ok', 'message':top if top else 'Ничего не найдено'}
     except Exception as e:
         print("ERROR:",e)
 

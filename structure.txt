@@ -1,0 +1,86 @@
+Ñòðóêòóðà ïàïîê
+Ñåðèéíûé íîìåð òîìà: 00000064 44E7:875A
+C:.
+¦   alembic.ini
+¦   audit.py
+¦   auth.py
+¦   config.py
+¦   database.py
+¦   events.db
+¦   googleb487f7db970152b3.html
+¦   main.py
+¦   models.py
+¦   README.md
+¦   requirements.txt
+¦   structure.txt
+¦   taskrepo.py
+¦   taskservice.py
+¦   test.db
+¦   yandex_12353e0b4137cb06.html
+¦   
++---.pytest_cache
+¦   ¦   .gitignore
+¦   ¦   CACHEDIR.TAG
+¦   ¦   README.md
+¦   ¦   
+¦   L---v
+¦       L---cache
+¦               lastfailed
+¦               nodeids
+¦               
++---alembic
+¦   ¦   env.py
+¦   ¦   README
+¦   ¦   script.py.mako
+¦   ¦   
+¦   +---versions
+¦   ¦   ¦   3cd79e56e16e_added.py
+¦   ¦   ¦   b0dbb53ca2c5_fix_likes_count_default.py
+¦   ¦   ¦   
+¦   ¦   L---__pycache__
+¦   ¦           3cd79e56e16e_added.cpython-314.pyc
+¦   ¦           b0dbb53ca2c5_fix_likes_count_default.cpython-314.pyc
+¦   ¦           
+¦   L---__pycache__
+¦           env.cpython-314.pyc
+¦           
++---tasks
+¦   ¦   tasks.py
+¦   ¦   __init__.py
+¦   ¦   
+¦   L---__pycache__
+¦           tasks.cpython-314.pyc
+¦           __init__.cpython-314.pyc
+¦           
++---templates
+¦       deletemenu.html
+¦       global.html
+¦       history.html
+¦       info.html
+¦       llist.html
+¦       mainpage.html
+¦       meet.png
+¦       reglog.html
+¦       search.html
+¦       searchmenu.html
+¦       searchRESULT.html
+¦       statistics.html
+¦       topmenu.html
+¦       uved.html
+¦       
++---tests
+¦   ¦   test_events.py
+¦   ¦   
+¦   L---__pycache__
+¦           test_events.cpython-314-pytest-9.1.1.pyc
+¦           
+L---__pycache__
+        audit.cpython-314.pyc
+        auth.cpython-314.pyc
+        config.cpython-314.pyc
+        database.cpython-314.pyc
+        main.cpython-314.pyc
+        models.cpython-314.pyc
+        taskrepo.cpython-314.pyc
+        taskservice.cpython-314.pyc
+        
